@@ -1,0 +1,492 @@
+<title>G1 Game Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;700;800&family=Nunito+Sans:wght@400;600;700;800&display=swap">
+<style>
+/* Layout: projector console. Stage on the left carries one activity at a time, team scoreboard rail on the right. Single dark look to match the deck's game slides. */
+:root {
+  color-scheme: dark;
+  --ink: #0E1726;
+  --panel: #16213A;
+  --panel-2: #1C2946;
+  --line: rgba(246, 242, 236, 0.10);
+  --paper: #F6F2EC;
+  --muted: #A3ACBD;
+  --orange: #F26B21;
+  --amber: #FFB37A;
+  --help: #12A574;
+  --help-soft: rgba(18, 165, 116, 0.16);
+  --hinder: #E8385A;
+  --hinder-soft: rgba(232, 56, 90, 0.16);
+  --violet: #8B72FF;
+  --display: "Rubik", "Segoe UI", system-ui, sans-serif;
+  --body: "Nunito Sans", "Segoe UI", system-ui, sans-serif;
+}
+html, body { height: 100%; }
+body {
+  background: var(--ink);
+  background-image:
+    radial-gradient(60vw 50vh at 10% 0%, rgba(242, 107, 33, 0.14), transparent 70%),
+    radial-gradient(50vw 50vh at 100% 100%, rgba(109, 76, 255, 0.16), transparent 70%);
+  color: var(--paper);
+  font: 16px/1.5 var(--body);
+  overflow: hidden;
+}
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
+
+.app { height: 100%; display: grid; grid-template-rows: auto 1fr auto; padding-inline: 24px; }
+header {
+  display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+  padding-block: 16px; border-bottom: 1px solid var(--line);
+}
+.brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.emblem { width: 34px; height: 34px; border-radius: 50%; flex: none;
+  background: linear-gradient(90deg, var(--help) 50%, var(--hinder) 50%);
+  box-shadow: 0 0 0 3px rgba(246, 242, 236, 0.12); }
+.brand b { font: 700 17px/1.2 var(--display); letter-spacing: 0.02em; }
+.brand small { display: block; color: var(--muted); font-size: 13px; }
+nav { display: flex; gap: 6px; flex-wrap: wrap; margin-left: auto; }
+nav button {
+  border: 1px solid var(--line); background: transparent; border-radius: 999px;
+  padding: 8px 16px; font-weight: 700; font-size: 14px; color: var(--muted);
+}
+nav button span { opacity: 0.55; margin-right: 6px; font-family: var(--display); }
+nav button[aria-current="true"] { background: var(--paper); color: var(--ink); border-color: var(--paper); }
+.icon-btn { border: 1px solid var(--line); background: transparent; border-radius: 10px; padding: 8px 12px; font-weight: 700; font-size: 14px; color: var(--muted); }
+
+main { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 24px; min-height: 0; padding-block: 24px; }
+.stage { min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 22px; overflow: auto; }
+
+.kicker { display: inline-flex; align-items: center; gap: 10px; align-self: flex-start;
+  padding: 6px 14px; border-radius: 999px; background: rgba(242, 107, 33, 0.16); color: var(--amber);
+  font: 700 13px/1 var(--body); letter-spacing: 0.14em; text-transform: uppercase; }
+.kicker::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--orange); }
+.row { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+.spread { justify-content: space-between; }
+h1 { margin: 0; font: 800 clamp(30px, 3.4vw, 60px)/1.08 var(--display); text-wrap: balance; }
+.lead { margin: 0; color: var(--muted); font-size: clamp(16px, 1.3vw, 22px); }
+.progress { display: flex; gap: 6px; }
+.progress i { width: 26px; height: 6px; border-radius: 3px; background: var(--line); }
+.progress i.done { background: var(--amber); }
+.progress i.now { background: var(--orange); }
+.count { font: 700 15px var(--display); color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 22px; padding: clamp(20px, 2.4vw, 40px); }
+.situation { font: 700 clamp(28px, 3.3vw, 58px)/1.2 var(--display); text-wrap: balance; margin: 0; }
+.center-grid { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 28px; align-items: center; }
+
+.timer { position: relative; width: clamp(120px, 11vw, 190px); aspect-ratio: 1; max-width: 100%; }
+.timer svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.timer circle { fill: none; stroke-width: 9; }
+.timer .track { stroke: var(--line); }
+.timer .bar { stroke: var(--amber); stroke-linecap: round; transition: stroke 0.3s; }
+.timer.low .bar { stroke: var(--hinder); }
+.timer .num { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 4px; font: 800 clamp(34px, 3.4vw, 60px)/1 var(--display); font-variant-numeric: tabular-nums; }
+.timer.low .num { color: var(--hinder); }
+.timer .state { font: 700 10px/1 var(--body); text-align: center; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+
+.cards2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.hint { display: flex; align-items: center; gap: 14px; padding: 16px 20px; border-radius: 16px; font-weight: 700; font-size: clamp(16px, 1.3vw, 22px); }
+.hint .dot { width: 30px; height: 40px; border-radius: 6px; flex: none; }
+.hint.help { background: var(--help-soft); } .hint.help .dot { background: var(--help); }
+.hint.hinder { background: var(--hinder-soft); } .hint.hinder .dot { background: var(--hinder); }
+
+.verdict { border-radius: 22px; padding: clamp(18px, 2vw, 32px); display: grid; gap: 8px; animation: pop 0.35s ease-out; }
+.verdict.help { background: var(--help-soft); border: 2px solid var(--help); }
+.verdict.hinder { background: var(--hinder-soft); border: 2px solid var(--hinder); }
+.verdict .big { font: 800 clamp(34px, 3.6vw, 64px)/1 var(--display); letter-spacing: 0.02em; }
+.verdict.help .big { color: var(--help); } .verdict.hinder .big { color: var(--hinder); }
+.verdict .why { font-size: clamp(17px, 1.5vw, 26px); }
+.verdict .why b { color: var(--amber); }
+@keyframes pop { from { transform: scale(0.96); opacity: 0.4; } to { transform: none; opacity: 1; } }
+
+.patient { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 24px; align-items: center; }
+.avatar { width: clamp(90px, 8vw, 140px); aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center;
+  font: 800 clamp(40px, 4vw, 70px)/1 var(--display); color: var(--ink); background: var(--amber); }
+.patient h2 { margin: 0; font: 800 clamp(34px, 3.6vw, 64px)/1.05 var(--display); }
+.tag { display: inline-block; margin-top: 8px; padding: 4px 12px; border-radius: 999px; background: var(--hinder-soft); color: #FF9DB0; font-weight: 700; font-size: clamp(14px, 1.1vw, 18px); }
+.symptom { margin: 10px 0 0; font-size: clamp(20px, 2vw, 34px); font-weight: 700; }
+.rx { border-left: 6px solid var(--help); background: var(--help-soft); border-radius: 0 18px 18px 0; padding: 18px 24px; font-size: clamp(18px, 1.7vw, 28px); animation: pop 0.35s ease-out; }
+.rx b { display: block; font: 700 13px var(--body); letter-spacing: 0.14em; text-transform: uppercase; color: var(--help); margin-bottom: 4px; }
+
+.options { display: grid; gap: 14px; }
+.opt { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 18px; align-items: center; padding: 16px 22px; border-radius: 18px;
+  background: var(--panel); border: 2px solid var(--line); font-size: clamp(20px, 2vw, 34px); font-weight: 700; transition: opacity 0.3s, border-color 0.3s; }
+.opt .letter { width: 1.8em; aspect-ratio: 1; border-radius: 12px; display: grid; place-items: center; background: var(--panel-2); font-family: var(--display); }
+.opt .fingers { font-size: 14px; color: var(--muted); font-weight: 600; }
+.opt.right { border-color: var(--help); background: var(--help-soft); }
+.opt.right .letter { background: var(--help); color: var(--ink); }
+.opt.wrong { opacity: 0.35; }
+
+.phases { display: grid; gap: 8px; }
+.phase { display: grid; grid-template-columns: 1fr auto auto; gap: 14px; align-items: center; padding: 12px 18px; border-radius: 14px; border: 1px solid var(--line); color: var(--muted); font-weight: 700; }
+.phase.now { background: var(--paper); color: var(--ink); border-color: var(--paper); }
+.phase.past { opacity: 0.5; text-decoration: line-through; }
+.side-for { color: var(--help); } .side-against { color: var(--hinder); }
+.phase.now .side-for, .phase.now .side-against { color: inherit; }
+.motion { font: 800 clamp(26px, 2.8vw, 48px)/1.15 var(--display); margin: 0; text-wrap: balance; }
+.votes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.vote { display: grid; gap: 10px; }
+.vote h3 { margin: 0; font: 700 13px var(--body); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+.stepper { display: flex; align-items: center; gap: 10px; }
+.stepper label { flex: 1; font-weight: 700; }
+.stepper output { min-width: 2.4ch; text-align: right; font: 800 26px var(--display); font-variant-numeric: tabular-nums; }
+.mini { width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel-2); font-weight: 800; }
+
+.words { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+.word { padding: 18px 10px; border-radius: 16px; text-align: center; background: var(--paper); color: var(--ink); font: 800 clamp(18px, 1.8vw, 32px)/1.1 var(--display); animation: pop 0.4s ease-out both; }
+.hands { display: flex; gap: 10px; flex-wrap: wrap; }
+.hands span { padding: 8px 16px; border-radius: 999px; background: var(--panel-2); font-weight: 700; }
+.podium { display: grid; gap: 10px; }
+.place { display: grid; grid-template-columns: 3ch minmax(0, 1fr) auto; gap: 16px; align-items: center; padding: 14px 22px; border-radius: 16px; background: var(--panel); font: 700 clamp(18px, 1.8vw, 30px) var(--display); animation: pop 0.4s ease-out both; }
+.place.first { background: var(--orange); color: var(--ink); font-size: clamp(24px, 2.6vw, 44px); }
+.place .pts { font-variant-numeric: tabular-nums; }
+
+.controls { display: flex; gap: 10px; flex-wrap: wrap; margin-top: auto; padding-top: 4px; }
+.btn { border: 1px solid var(--line); background: var(--panel-2); border-radius: 12px; padding: 12px 18px; font-weight: 800; font-size: 15px; }
+.btn.primary { background: var(--orange); border-color: var(--orange); color: var(--ink); }
+.btn kbd { font: 600 12px var(--body); opacity: 0.7; margin-left: 8px; padding: 1px 6px; border: 1px solid currentColor; border-radius: 5px; }
+
+aside { min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 12px; overflow: auto; }
+.rail-head { display: flex; align-items: center; justify-content: space-between; }
+.rail-head h2 { margin: 0; font: 700 13px var(--body); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+.team { display: grid; grid-template-columns: 6px minmax(0, 1fr) auto auto; gap: 10px; align-items: center; padding: 10px 12px 10px 0; border-radius: 14px; background: var(--panel); border: 1px solid var(--line); overflow: hidden; }
+.team .stripe { align-self: stretch; }
+.team input { width: 100%; min-width: 0; background: transparent; border: 0; color: var(--paper); font: 700 16px var(--body); padding: 2px 0; }
+.team .score { font: 800 30px/1 var(--display); font-variant-numeric: tabular-nums; text-align: right; min-width: 2ch; }
+.team .acts { display: flex; gap: 6px; }
+.team .acts button { width: 40px; border: 1px solid var(--line); background: var(--panel-2); border-radius: 9px; padding: 6px 0; font-weight: 800; font-size: 14px; }
+.team .acts .plus { background: rgba(18, 165, 116, 0.22); border-color: rgba(18, 165, 116, 0.5); }
+.team.lead-team { border-color: var(--amber); }
+.team.bump .score { animation: bump 0.4s ease-out; }
+@keyframes bump { 40% { transform: scale(1.35); color: var(--amber); } }
+.rail-foot { display: flex; gap: 8px; flex-wrap: wrap; margin-top: auto; }
+.rail-foot .icon-btn { flex: 1; }
+.danger { color: #FF9DB0; }
+
+footer { padding-block: 10px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; display: flex; gap: 18px; flex-wrap: wrap; }
+footer kbd { font: 700 12px var(--body); padding: 1px 6px; border: 1px solid var(--line); border-radius: 5px; margin-right: 4px; color: var(--paper); }
+
+@media (max-width: 960px) {
+  body { overflow: auto; }
+  .app { height: auto; min-height: 100%; }
+  main { grid-template-columns: minmax(0, 1fr); }
+  .center-grid { grid-template-columns: minmax(0, 1fr); justify-items: start; }
+  .words { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cards2, .votes { grid-template-columns: minmax(0, 1fr); }
+  .patient { grid-template-columns: minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="app">
+  <header>
+    <div class="brand">
+      <div class="emblem" aria-hidden="true"></div>
+      <div><b>Group 1 · Game Hub</b><small>How to Use AI to Help, Not Hinder, Learning</small></div>
+    </div>
+    <nav id="nav" aria-label="Activities"></nav>
+    <button class="icon-btn" id="soundBtn" type="button" aria-pressed="true">Sound on</button>
+    <button class="icon-btn" id="fsBtn" type="button">Full screen</button>
+  </header>
+  <main>
+    <section class="stage" id="stage" aria-live="polite"></section>
+    <aside aria-label="Scoreboard">
+      <div class="rail-head"><h2>Scoreboard</h2>
+        <div class="row" style="gap:6px"><button class="mini" id="teamMinus" type="button" aria-label="Remove a team">−</button><button class="mini" id="teamPlus" type="button" aria-label="Add a team">+</button></div>
+      </div>
+      <div id="teams" style="display:grid;gap:10px"></div>
+      <div class="rail-foot">
+        <button class="icon-btn" id="undoBtn" type="button">Undo last point</button>
+        <button class="icon-btn danger" id="resetBtn" type="button">Reset scores</button>
+      </div>
+    </aside>
+  </main>
+  <footer>
+    <span><kbd>Space</kbd>start or pause timer</span>
+    <span><kbd>Enter</kbd>reveal answer</span>
+    <span><kbd>→</kbd><kbd>←</kbd>next or previous</span>
+    <span><kbd>1</kbd>to<kbd>5</kbd>switch activity</span>
+    <span><kbd>F</kbd>full screen</span>
+  </footer>
+</div>
+
+<script>
+const R1 = [
+  { t: "An AI app raises the difficulty when you get answers right.", a: "help", p: "Personalised learning paths adapt pace and challenge." },
+  { t: "AI gives you a hint after each wrong step in a maths problem.", a: "help", p: "Real-time feedback and scaffolding support struggling learners." },
+  { t: "Your class uses an AI chatbot quiz and everyone joins in.", a: "help", p: "Interactive tools like chatbots increase engagement." },
+  { t: "You stop trying problems yourself because AI is faster.", a: "hinder", p: "Over-reliance reduces initiative and deep thinking." },
+  { t: "You submit an AI-written essay and feel it is not really yours.", a: "hinder", p: "Less ownership: the learning does not feel like yours." },
+  { t: "You ask AI for a metaphor to understand a hard biology idea.", a: "help", p: "Forming memories: metaphors make new content easier to understand." },
+  { t: "You talk through your messy ideas with AI to plan your own essay.", a: "help", p: "Retrieving memories: AI helps you organise your own thoughts." },
+  { t: "AI does all your homework, and you forget everything before the exam.", a: "hinder", p: "Disrupts memory and cuts corners: it saves time but you learn less." }
+];
+const R2 = [
+  { n: "Martina", tag: "Not interested, too busy", s: "ChatGPT wrote her essay.", rx: "Chat with an AI chatbot to raise her interest, find value in the task and make it easier." },
+  { n: "Greg", tag: "Thinks he cannot write", s: "Copilot wrote his essay.", rx: "Use Copilot to help him write the essay, not to write it for him." },
+  { n: "Louisa", tag: "Full-time job, sick child", s: "Had an outline, but did not submit.", rx: "Dictate her thoughts with speech-to-text in the ChatGPT app, give her outline to the chatbot, then ask it to help edit the draft." }
+];
+const QUIZ = [
+  { q: "Which AI feature adapts pace and challenge?", o: ["Personalised learning paths", "Spell check", "Plagiarism checker"], c: 0 },
+  { q: "Real-time AI feedback and scaffolding mainly support whom?", o: ["Teachers", "Struggling learners", "Top students only"], c: 1 },
+  { q: "Which are interactive AI tools named in the lesson?", o: ["Chatbots and adaptive exercises", "Calculators", "E-books"], c: 0 },
+  { q: "Over-reliance on AI reduces initiative and ______ thinking.", o: ["group", "deep", "quick"], c: 1 },
+  { q: "Students who over-rely on AI may feel less ______ over learning.", o: ["ownership", "pressure", "boredom"], c: 0 },
+  { q: "To understand unfamiliar content when forming memories, ask AI for:", o: ["Answers", "Metaphors", "Translations"], c: 1 },
+  { q: "Using AI to organise your thoughts for an essay supports which memory step?", o: ["Forming", "Retrieving", "Deleting"], c: 1 },
+  { q: "When AI disrupts forming, retrieving and storing, what happens?", o: ["We learn faster", "We forget or struggle to recall", "Nothing changes"], c: 1 },
+  { q: "Cutting corners with AI saves time but reduces the learning ______.", o: ["experience", "cost", "speed"], c: 0 },
+  { q: "Which feature could Louisa have used to dictate her thoughts?", o: ["Speech-to-text", "Image generator", "Translator"], c: 0 }
+];
+const PHASES = [
+  { k: "Prepare", who: "Both sides", d: 60 },
+  { k: "Opening", who: "FOR", d: 120 },
+  { k: "Opening", who: "AGAINST", d: 120 },
+  { k: "Rebuttal", who: "FOR", d: 60 },
+  { k: "Rebuttal", who: "AGAINST", d: 60 },
+  { k: "Open floor", who: "Everyone", d: 180 },
+  { k: "Vote", who: "Class decides", d: 0 }
+];
+const WORDS = ["cat", "umbrella", "volcano", "bread", "key", "rainbow", "clock", "bicycle", "pineapple", "candle"];
+const COLORS = ["#F26B21", "#12A574", "#8B72FF", "#E8385A", "#2BA3E0", "#FFB37A"];
+const MODES = [
+  { id: "r1", label: "Help or Hinder?" },
+  { id: "r2", label: "AI Doctor" },
+  { id: "debate", label: "Debate" },
+  { id: "quiz", label: "Quiz" },
+  { id: "recall", label: "Recall" }
+];
+
+const KEY = "g1hub.v1";
+function fresh() {
+  return {
+    mode: "r1", r1: 0, r2: 0, quiz: 0, phase: 0, revealed: false, recall: 0,
+    teams: [1, 2, 3, 4, 5].map(n => ({ name: "Team " + n, score: 0 })),
+    votes: { beforeFor: 0, beforeAgainst: 0, afterFor: 0, afterAgainst: 0 },
+    log: [], sound: true
+  };
+}
+function load() {
+  try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.teams) return Object.assign(fresh(), s); } catch (e) {}
+  return fresh();
+}
+let S;
+const T = { dur: 0, left: 0, running: false, endAt: 0, raf: 0, lastTick: -1 };
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+
+// ---------- sound ----------
+let ac = null;
+function beep(freq, len, vol) {
+  if (!S.sound) return;
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.frequency.value = freq; o.type = "sine";
+    g.gain.setValueAtTime(vol || 0.15, ac.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + len);
+    o.connect(g).connect(ac.destination); o.start(); o.stop(ac.currentTime + len);
+  } catch (e) {}
+}
+const tick = () => beep(880, 0.08, 0.08);
+const buzz = () => { beep(220, 0.5, 0.2); setTimeout(() => beep(165, 0.6, 0.2), 120); };
+const ding = () => { beep(660, 0.15); setTimeout(() => beep(990, 0.3), 120); };
+
+// ---------- timer ----------
+function setTimer(sec) { cancelAnimationFrame(T.raf); Object.assign(T, { dur: sec, left: sec, running: false, lastTick: -1 }); drawTimer(); }
+function toggleTimer() {
+  if (!T.dur) return;
+  if (T.running) { T.running = false; T.left = Math.max(0, (T.endAt - performance.now()) / 1000); cancelAnimationFrame(T.raf); drawTimer(); return; }
+  if (T.left <= 0) T.left = T.dur;
+  T.running = true; T.endAt = performance.now() + T.left * 1000; loop();
+}
+function loop() {
+  T.left = Math.max(0, (T.endAt - performance.now()) / 1000);
+  const whole = Math.ceil(T.left);
+  if (whole !== T.lastTick) { if (whole <= 5 && whole > 0) tick(); T.lastTick = whole; }
+  if (T.left <= 0) { T.running = false; buzz(); drawTimer(); return; }
+  drawTimer(); T.raf = requestAnimationFrame(loop);
+}
+function fmt(s) { s = Math.ceil(s); return s >= 60 ? Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0") : String(s); }
+function timerHTML() {
+  return `<div class="timer" id="timer" role="timer" aria-label="Countdown">
+    <svg viewBox="0 0 100 100" aria-hidden="true"><circle class="track" cx="50" cy="50" r="44"/><circle class="bar" id="tbar" cx="50" cy="50" r="44" stroke-dasharray="276.5" stroke-dashoffset="0"/></svg>
+    <div class="num"><span id="tnum"></span><span class="state" id="tstate"></span></div></div>`;
+}
+function drawTimer() {
+  const el = document.getElementById("timer"); if (!el) return;
+  const frac = T.dur ? T.left / T.dur : 0;
+  document.getElementById("tbar").setAttribute("stroke-dashoffset", String(276.5 * (1 - frac)));
+  document.getElementById("tnum").textContent = fmt(T.left);
+  document.getElementById("tstate").textContent = T.running ? "" : (T.left <= 0 ? "Time" : (T.left === T.dur ? "Space to start" : "Paused"));
+  el.classList.toggle("low", T.left <= 5 && T.dur > 0);
+}
+
+// ---------- scoreboard ----------
+function renderTeams(bumpIdx) {
+  const max = Math.max(...S.teams.map(t => t.score));
+  document.getElementById("teams").innerHTML = S.teams.map((t, i) => `
+    <div class="team${t.score === max && max > 0 ? " lead-team" : ""}${i === bumpIdx ? " bump" : ""}">
+      <div class="stripe" style="background:${COLORS[i]}"></div>
+      <input id="team-${i}" value="${t.name.replace(/"/g, "&quot;")}" aria-label="Team ${i + 1} name" data-i="${i}">
+      <div class="acts"><button type="button" data-d="-1" data-i="${i}" aria-label="Minus one for ${t.name}">−1</button><button type="button" class="plus" data-d="1" data-i="${i}" aria-label="Plus one for ${t.name}">+1</button></div>
+      <div class="score">${t.score}</div>
+    </div>`).join("");
+}
+function addPoint(i, d) {
+  S.teams[i].score = Math.max(0, S.teams[i].score + d);
+  S.log.push([i, d]); if (S.log.length > 200) S.log.shift();
+  if (d > 0) ding();
+  save(); renderTeams(i);
+  if (S.mode === "recall" && S.recall === 2) render();
+}
+document.getElementById("teams").addEventListener("click", e => {
+  const b = e.target.closest("button[data-d]"); if (b) addPoint(+b.dataset.i, +b.dataset.d);
+});
+document.getElementById("teams").addEventListener("input", e => {
+  if (e.target.dataset.i != null) { S.teams[+e.target.dataset.i].name = e.target.value || "Team"; save(); }
+});
+document.getElementById("teamPlus").onclick = () => { if (S.teams.length < 6) { S.teams.push({ name: "Team " + (S.teams.length + 1), score: 0 }); save(); renderTeams(); } };
+document.getElementById("teamMinus").onclick = () => { if (S.teams.length > 2) { S.teams.pop(); save(); renderTeams(); } };
+document.getElementById("undoBtn").onclick = () => {
+  const last = S.log.pop(); if (!last) return;
+  S.teams[last[0]] && (S.teams[last[0]].score = Math.max(0, S.teams[last[0]].score - last[1]));
+  save(); renderTeams();
+};
+let resetArmed = 0;
+document.getElementById("resetBtn").onclick = e => {
+  const b = e.currentTarget;
+  if (Date.now() - resetArmed < 3000) {
+    S.teams.forEach(t => t.score = 0); S.log = []; save(); renderTeams();
+    b.textContent = "Reset scores"; resetArmed = 0; return;
+  }
+  resetArmed = Date.now(); b.textContent = "Click again to reset";
+  setTimeout(() => { if (Date.now() - resetArmed >= 3000) b.textContent = "Reset scores"; }, 3100);
+};
+
+// ---------- views ----------
+function dots(n, i) { return `<div class="progress" aria-hidden="true">${Array.from({ length: n }, (_, k) => `<i class="${k < i ? "done" : k === i ? "now" : ""}"></i>`).join("")}</div>`; }
+function controls(extra) {
+  return `<div class="controls">
+    <button class="btn" type="button" data-act="prev">Previous<kbd>←</kbd></button>
+    <button class="btn" type="button" data-act="timer">Start / pause<kbd>Space</kbd></button>
+    ${extra || `<button class="btn primary" type="button" data-act="reveal">Reveal<kbd>Enter</kbd></button>`}
+    <button class="btn" type="button" data-act="next">Next<kbd>→</kbd></button>
+  </div>`;
+}
+const views = {
+  r1() {
+    const it = R1[S.r1];
+    return `<div class="row spread"><span class="kicker">Round 1 of 2 · Help or Hinder?</span><div class="row">${dots(R1.length, S.r1)}<span class="count">${S.r1 + 1} / ${R1.length}</span></div></div>
+      <div class="center-grid"><div class="card"><p class="situation">${it.t}</p></div>${timerHTML()}</div>
+      ${S.revealed
+        ? `<div class="verdict ${it.a}"><div class="big">${it.a === "help" ? "Helps learning" : "Hinders learning"}</div><div class="why"><b>Point from our lesson:</b> ${it.p}</div></div>`
+        : `<div class="cards2"><div class="hint help"><span class="dot"></span>Green card = helps</div><div class="hint hinder"><span class="dot"></span>Red card = hinders</div></div>
+           <p class="lead">Correct card = 1 point. Name the point from our lesson = 1 bonus point.</p>`}
+      ${controls()}`;
+  },
+  r2() {
+    const it = R2[S.r2];
+    return `<div class="row spread"><span class="kicker">Round 2 of 2 · AI Doctor</span><div class="row">${dots(R2.length, S.r2)}<span class="count">Patient ${S.r2 + 1} / ${R2.length}</span></div></div>
+      <div class="center-grid"><div class="card patient"><div class="avatar" aria-hidden="true">${it.n[0]}</div>
+        <div><h2>${it.n}</h2><span class="tag">${it.tag}</span><p class="symptom">${it.s}</p></div></div>${timerHTML()}</div>
+      ${S.revealed ? `<div class="rx"><b>Better prescription</b>${it.rx}</div>`
+        : `<p class="lead">Each team writes a prescription: how should ${it.n} use AI to help, not hinder? One point if it matches the answer.</p>`}
+      ${controls()}`;
+  },
+  debate() {
+    const v = S.votes;
+    const step = (k, label) => `<div class="stepper"><label for="v-${k}">${label}</label><button class="mini" type="button" data-v="${k}" data-d="-1" aria-label="Minus one">−</button><output id="v-${k}">${v[k]}</output><button class="mini" type="button" data-v="${k}" data-d="1" aria-label="Plus one">+</button></div>`;
+    return `<span class="kicker">Debate</span>
+      <div class="center-grid"><p class="motion">“AI makes students less motivated to learn.”</p>${timerHTML()}</div>
+      <div class="phases">${PHASES.map((p, i) => `<div class="phase ${i === S.phase ? "now" : i < S.phase ? "past" : ""}"><span>${p.k}</span><span class="${p.who === "FOR" ? "side-for" : p.who === "AGAINST" ? "side-against" : ""}">${p.who}</span><span>${p.d ? fmt(p.d) : "Hands"}</span></div>`).join("")}</div>
+      <div class="votes card"><div class="vote"><h3>Vote before</h3>${step("beforeFor", "For")}${step("beforeAgainst", "Against")}</div>
+        <div class="vote"><h3>Vote after</h3>${step("afterFor", "For")}${step("afterAgainst", "Against")}</div></div>
+      ${controls(" ")}`;
+  },
+  quiz() {
+    const it = QUIZ[S.quiz];
+    return `<div class="row spread"><span class="kicker">Quiz review</span><div class="row">${dots(QUIZ.length, S.quiz)}<span class="count">${S.quiz + 1} / ${QUIZ.length}</span></div></div>
+      <div class="center-grid"><h1>${it.q}</h1>${timerHTML()}</div>
+      <div class="options">${it.o.map((o, k) => `<div class="opt ${S.revealed ? (k === it.c ? "right" : "wrong") : ""}"><span class="letter">${"ABC"[k]}</span><span>${o}</span><span class="fingers">${k + 1} finger${k ? "s" : ""}</span></div>`).join("")}</div>
+      <p class="lead">Teams agree, then hold up 1, 2 or 3 fingers. One point per correct team.</p>
+      ${controls()}`;
+  },
+  recall() {
+    const ranked = S.teams.map((t, i) => ({ ...t, i })).sort((a, b) => b.score - a.score);
+    const top = ranked[0] ? ranked[0].score : 0;
+    const stage = [
+      `<div class="center-grid"><div class="card"><p class="situation">Write down the 10 words from the start.</p><p class="lead" style="margin-top:12px">No talking. 30 seconds.</p></div>${timerHTML()}</div>`,
+      `<div class="words">${WORDS.map((w, k) => `<div class="word" style="animation-delay:${k * 0.12}s">${w}</div>`).join("")}</div>
+       <div class="hands"><span>10 words</span><span>8 or more</span><span>5 or more</span><span>Fewer than 5</span></div>
+       <p class="lead">We formed these memories once and never retrieved them, so most of them faded.</p>`,
+      `<h1>${ranked.filter(t => t.score === top).map(t => t.name).join(" and ")} win${ranked.filter(t => t.score === top).length > 1 ? "" : "s"}!</h1>
+       <div class="podium">${ranked.map((t, k) => `<div class="place ${t.score === top ? "first" : ""}" style="animation-delay:${k * 0.1}s"><span>${k + 1}</span><span>${t.name}</span><span class="pts">${t.score} pts</span></div>`).join("")}</div>`
+    ][S.recall];
+    const label = ["Show the words", "Show the winner", "Back to recall"][S.recall];
+    return `<div class="row spread"><span class="kicker">Memory challenge · Recall</span>${dots(3, S.recall)}</div>${stage}
+      ${controls(`<button class="btn primary" type="button" data-act="reveal">${label}<kbd>Enter</kbd></button>`)}`;
+  }
+};
+const TIMES = { r1: 15, r2: 60, quiz: 20, recall: 30 };
+
+function render(keepTimer) {
+  document.getElementById("nav").innerHTML = MODES.map((m, i) => `<button type="button" data-mode="${m.id}" aria-current="${S.mode === m.id}"><span>${i + 1}</span>${m.label}</button>`).join("");
+  document.getElementById("stage").innerHTML = views[S.mode]();
+  if (!keepTimer) {
+    if (S.mode === "debate") setTimer(PHASES[S.phase].d);
+    else if (S.mode === "recall" && S.recall !== 0) setTimer(0);
+    else setTimer(TIMES[S.mode]);
+  }
+  drawTimer();
+  const t = document.getElementById("timer"); if (t) t.hidden = !T.dur;
+  save();
+}
+
+function move(d) {
+  const lim = { r1: R1.length, r2: R2.length, quiz: QUIZ.length, debate: PHASES.length, recall: 3 }[S.mode];
+  const k = { r1: "r1", r2: "r2", quiz: "quiz", debate: "phase", recall: "recall" }[S.mode];
+  const n = S[k] + d; if (n < 0 || n >= lim) return;
+  S[k] = n; S.revealed = false; render();
+}
+function reveal() {
+  if (S.mode === "recall") { S.recall = (S.recall + 1) % 3; render(); return; }
+  if (S.mode === "debate") return;
+  S.revealed = !S.revealed;
+  if (S.revealed) { if (T.running) toggleTimer(); ding(); }
+  render(true);
+}
+function setMode(m) { if (S.mode === m) return; S.mode = m; S.revealed = false; render(); }
+
+document.getElementById("nav").addEventListener("click", e => { const b = e.target.closest("[data-mode]"); if (b) setMode(b.dataset.mode); });
+document.getElementById("stage").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.dataset.v) { const k = b.dataset.v; S.votes[k] = Math.max(0, S.votes[k] + +b.dataset.d); document.getElementById("v-" + k).textContent = S.votes[k]; save(); return; }
+  ({ prev: () => move(-1), next: () => move(1), timer: toggleTimer, reveal })[b.dataset.act]?.();
+});
+document.addEventListener("keydown", e => {
+  if (e.target.tagName === "INPUT" || e.altKey || e.ctrlKey || e.metaKey) return;
+  const k = e.key;
+  if (k === " ") { e.preventDefault(); toggleTimer(); }
+  else if (k === "Enter") { e.preventDefault(); reveal(); }
+  else if (k === "ArrowRight") move(1);
+  else if (k === "ArrowLeft") move(-1);
+  else if (k >= "1" && k <= "5") setMode(MODES[+k - 1].id);
+  else if (k === "f" || k === "F") fullscreen();
+});
+function fullscreen() {
+  try { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen().catch(() => {}); } catch (e) {}
+}
+document.getElementById("fsBtn").onclick = fullscreen;
+const soundBtn = document.getElementById("soundBtn");
+function drawSound() { soundBtn.textContent = S.sound ? "Sound on" : "Sound off"; soundBtn.setAttribute("aria-pressed", String(S.sound)); }
+soundBtn.onclick = () => { S.sound = !S.sound; drawSound(); save(); };
+
+function start(data) {
+  S = data && data.teams ? Object.assign(fresh(), data) : load();
+  drawSound(); renderTeams(); render();
+}
+window.claude?.hot?.snapshot?.(() => S);
+window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
+</script>
